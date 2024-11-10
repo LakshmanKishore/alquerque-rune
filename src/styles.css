@@ -1,3 +1,7 @@
+:root {
+  --outline-size: 0.2rem;
+}
+
 body,
 html {
   padding: 0;
@@ -25,20 +29,24 @@ main {
 }
 
 @keyframes right {
+
   0%,
   100% {
     transform: translate(-20px);
   }
+
   50% {
     transform: translate(20px);
   }
 }
 
 @keyframes left {
+
   0%,
   100% {
     transform: translate(20px);
   }
+
   50% {
     transform: translate(-20px);
   }
@@ -70,15 +78,25 @@ button:before {
   transition: opacity 1s ease-out;
 }
 
-button[dim="true"]:before {
-  opacity: 0.2;
-  scale: 0.8;
+button[movable="true"]:before {
+  outline: var(--outline-size) solid yellow;
+}
+
+button[selected="true"]:before {
+  outline: var(--outline-size) solid green;
+}
+
+button[is-movable-destination="true"]:before {
+  background-color: green;
+  border-radius: 50%;
+  opacity: 0.4;
 }
 
 @keyframes scale-in {
   0% {
     transform: scale(0);
   }
+
   100% {
     transform: scale(1);
   }
@@ -87,22 +105,15 @@ button[dim="true"]:before {
 button[player="0"]:before {
   background-image: url(./assets/white.svg);
   animation: scale-in 0.2s ease-in-out;
+  border-radius: 50%;
 }
 
 button[player="1"]:before {
   background-image: url(./assets/black.svg);
+  border-radius: 50%;
   animation: scale-in 0.2s ease-in-out;
 }
 
-button:nth-child(3n) {
-  border-right: 0;
-}
-
-button:nth-child(7),
-button:nth-child(8),
-button:nth-child(9) {
-  border-bottom: 0;
-}
 
 button:not([disabled]) {
   cursor: pointer;
@@ -112,9 +123,11 @@ button:not([disabled]) {
   0% {
     transform: scale(0.7);
   }
+
   50% {
     transform: scale(1);
   }
+
   100% {
     transform: scale(0.7);
   }

@@ -19,7 +19,7 @@ function initUI(
 ) {
   cellButtons = cells.map((_, cellIndex) => {
     const button = document.createElement("button")
-    button.addEventListener("click", () => Dusk.actions.claimCell(cellIndex))
+    button.addEventListener("click", () => Dusk.actions.handleClick(cellIndex))
     board.appendChild(button)
 
     return button
@@ -45,9 +45,25 @@ Dusk.initClient({
   onChange: ({ game, yourPlayerId, action }) => {
     const { cells, playerIds, winCombo, lastMovePlayerId, freeCells } = game
 
+    console.log("cells", cells)
+    console.log("cellButtons", cellButtons)
+    // Print the current player turn
+    console.log(
+      "Player name:",
+      Dusk.getPlayerInfo(yourPlayerId || "asdf").displayName
+    )
+
     if (!cellButtons) initUI(cells, playerIds, yourPlayerId)
 
     if (lastMovePlayerId) board.classList.remove("initial")
+
+    // const movablePieces = []
+
+    // Logic to highlight movable pieces
+    // for (let i = 0; i < cells.length; i++) {
+    //   // const
+
+    // }
 
     cellButtons.forEach((button, i) => {
       const cellValue = cells[i]
@@ -57,15 +73,25 @@ Dusk.initClient({
         (cellValue !== null ? playerIds.indexOf(cellValue) : -1).toString()
       )
       button.setAttribute(
-        "dim",
-        String((winCombo && !winCombo.includes(i)) || (!freeCells && !winCombo))
+        "movable",
+        // String((winCombo && !winCombo.includes(i)) || (!freeCells && !winCombo))
+        // Movable pieces should be highlighted in yellow color.
+        // Movable pieces are the ones that are of players turns and it cannot take any of the other players pieces.
+        String(game.movableCellIndexes.includes(i))
       )
 
-      if (cells[i] || lastMovePlayerId === yourPlayerId || winCombo) {
-        button.setAttribute("disabled", "")
-      } else {
-        button.removeAttribute("disabled")
-      }
+      button.setAttribute("selected", String(game.selectedCellIndex === i))
+
+      button.setAttribute(
+        "is-movable-destination",
+        String(game.movableDestinations.includes(i))
+      )
+
+      // if (cells[i] || lastMovePlayerId === yourPlayerId || winCombo) {
+      //   button.setAttribute("disabled", "")
+      // } else {
+      //   button.removeAttribute("disabled")
+      // }
     })
 
     playerContainers.forEach((container, i) => {

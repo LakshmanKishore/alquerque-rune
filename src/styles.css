@@ -1,5 +1,6 @@
 :root {
-  --outline-size: 0.2rem;
+  --outline-size: 1.3vw;
+  --lines-color: #e6e6e620;
 }
 
 body,
@@ -26,6 +27,8 @@ main {
   aspect-ratio: 1;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
+  /* For the lines */
+  position: relative;
 }
 
 @keyframes right {
@@ -55,13 +58,12 @@ main {
 button {
   position: relative;
   background: transparent;
-  border: 1.3vw solid #e6e6e620;
-  border-left: 0;
-  border-top: 0;
+  border: 0px;
   width: 100%;
   aspect-ratio: 1;
   padding: 0;
   margin: 0;
+  z-index: 10;
 }
 
 button:before {
@@ -133,7 +135,68 @@ button:not([disabled]) {
   }
 }
 
-#board.initial button:nth-child(5)::before {
+
+#board table {
+  position: absolute;
+  top: 9.5%;
+  left: 9.5%;
+  width: 81%;
+  height: 81%;
+  z-index: 0;
+  border-collapse: collapse;
+}
+
+#board table td {
+  border: 1.3vw solid var(--lines-color);
+}
+
+/* Diagonal lines */
+.diagonal-line {
+  position: absolute;
+  border: none;
+  z-index: 0;
+}
+
+/* Top-left to bottom-right diagonal */
+.diagonal-line.tl-br {
+  border-top: 1.3vw solid var(--lines-color);
+  transform: rotate(45deg);
+  transform-origin: top left;
+  top: 10%;
+  left: 10.5%;
+  width: 113%;
+  height: 1%;
+  z-index: 0;
+}
+
+/* Bottom-left to top-right diagonal */
+.diagonal-line.bl-tr {
+  border-top: 1.3vw solid var(--lines-color);
+  transform: rotate(-45deg);
+  transform-origin: top right;
+  top: 10%;
+  left: -24%;
+  width: 113%;
+  height: 1%;
+  z-index: 0;
+}
+
+/* Rhombus shape */
+.rhombus {
+  position: absolute;
+  border: 1.3vw solid var(--lines-color);
+  transform: rotate(45deg);
+  transform-origin: center;
+  top: 21%;
+  left: 21%;
+  width: 56%;
+  height: 56%;
+  z-index: 0;
+}
+
+
+
+/* #board.initial button:nth-child(5)::before {
   opacity: 1;
   content: "tap to play";
   display: flex;
@@ -157,7 +220,7 @@ button:not([disabled]) {
   -webkit-text-fill-color: transparent;
 
   animation: tap-to-play 1.5s ease-in-out infinite;
-}
+} */
 
 @media (hover: hover) {
   button:not([disabled]):after {
@@ -169,7 +232,7 @@ button:not([disabled]) {
     margin-top: -10%;
     margin-left: -10%;
     width: 20%;
-    border-radius: 50%;
+    /* border-radius: 50%; */
     background: #e6e6e6;
     aspect-ratio: 1;
     transition: all 0.15s ease-in-out;

@@ -70,9 +70,7 @@ function initUI(
 
 Dusk.initClient({
   onChange: ({ game, yourPlayerId, action }) => {
-    const { cells, playerIds, winCombo, lastMovePlayerId, freeCells } = game
-
-    console.log("cells", cells)
+    console.log("cells", game.cells)
     console.log("cellButtons", cellButtons)
     // Print the current player turn
     console.log(
@@ -80,9 +78,9 @@ Dusk.initClient({
       Dusk.getPlayerInfo(yourPlayerId || "asdf").displayName
     )
 
-    if (!cellButtons) initUI(cells, playerIds, yourPlayerId)
+    if (!cellButtons) initUI(game.cells, game.playerIds, yourPlayerId)
 
-    if (lastMovePlayerId) board.classList.remove("initial")
+    // if (game.lastMovePlayerId) board.classList.remove("initial")
 
     // const movablePieces = []
 
@@ -93,11 +91,11 @@ Dusk.initClient({
     // }
 
     cellButtons.forEach((button, i) => {
-      const cellValue = cells[i]
+      const cellValue = game.cells[i]
 
       button.setAttribute(
         "player",
-        (cellValue !== null ? playerIds.indexOf(cellValue) : -1).toString()
+        (cellValue !== null ? game.playerIds.indexOf(cellValue) : -1).toString()
       )
       button.setAttribute(
         "movable",
@@ -111,20 +109,29 @@ Dusk.initClient({
 
       button.setAttribute(
         "is-movable-destination",
-        String(game.movableDestinations.includes(i))
+        String(
+          game.movableDestinations.some(
+            (destination) => destination.destinationCellIndex === i
+          )
+        )
       )
 
-      // if (cells[i] || lastMovePlayerId === yourPlayerId || winCombo) {
-      //   button.setAttribute("disabled", "")
-      // } else {
-      //   button.removeAttribute("disabled")
-      // }
+      // Disable the button if it's not your turn
+      if (yourPlayerId !== cellValue && cellValue !== null) {
+        button.setAttribute("disabled", "")
+      } else {
+        button.removeAttribute("disabled")
+      }
     })
 
     playerContainers.forEach((container, i) => {
       container.setAttribute(
         "your-turn",
-        String(playerIds[i] !== lastMovePlayerId && !winCombo && freeCells)
+        String(
+          game.playerIds[i] !== game.lastMovePlayerId &&
+            !game.winCombo &&
+            game.freeCells
+        )
       )
     })
 

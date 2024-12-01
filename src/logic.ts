@@ -1,15 +1,24 @@
 import type { PlayerId, DuskClient } from "dusk-games-sdk/multiplayer"
 
 export type Cells = (PlayerId | null)[]
+export type RemovableCellIndexWithDestinationCellIndex = {
+  removableCellIndex: number
+  destinationCellIndex: number
+}
 export interface GameState {
   cells: Cells
   winCombo: number[] | null
   lastMovePlayerId: PlayerId | null
+  currentPlayerId: PlayerId
   playerIds: PlayerId[]
   freeCells?: boolean
   movableCellIndexes: number[]
   selectedCellIndex?: number
-  movableDestinations: number[]
+  movableDestinations: RemovableCellIndexWithDestinationCellIndex[]
+  possibleMovableDestinationsWithRemovableCellIndex: {
+    [cellIndex: number]: RemovableCellIndexWithDestinationCellIndex[]
+  }
+  initCall: boolean
 }
 
 type GameActions = {
@@ -47,15 +56,133 @@ function findWinningCombo(cells: Cells) {
 }
 
 const getNeighborsIndexes = (cellIndex: number): number[] => {
-  const neighbors = [cellIndex - 1, cellIndex + 1, cellIndex - 5, cellIndex + 5]
+  const gridSize = 5 // Fixed size of the grid (5x5)
+  const neighbors: number[] = []
 
-  // Check if cell can move diagonally
-  if (cellIndex % 2 == 0) {
-    neighbors.push(cellIndex - 6, cellIndex + 6)
-    neighbors.push(cellIndex - 4, cellIndex + 4)
+  // Calculate row and column of the cell
+  const row = Math.floor(cellIndex / gridSize)
+  const col = cellIndex % gridSize
+
+  // Add direct neighbors (up, down, left, right)
+  if (col > 0) neighbors.push(cellIndex - 1) // Left
+  if (col < gridSize - 1) neighbors.push(cellIndex + 1) // Right
+  if (row > 0) neighbors.push(cellIndex - gridSize) // Up
+  if (row < gridSize - 1) neighbors.push(cellIndex + gridSize) // Down
+
+  // Add diagonal neighbors only if cellIndex % 2 === 0
+  if (cellIndex % 2 === 0) {
+    if (row > 0 && col > 0) neighbors.push(cellIndex - gridSize - 1) // Top-left
+    if (row > 0 && col < gridSize - 1) neighbors.push(cellIndex - gridSize + 1) // Top-right
+    if (row < gridSize - 1 && col > 0) neighbors.push(cellIndex + gridSize - 1) // Bottom-left
+    if (row < gridSize - 1 && col < gridSize - 1)
+      neighbors.push(cellIndex + gridSize + 1) // Bottom-right
   }
 
   return neighbors
+}
+
+// Get all the cells that can take out opponent cells
+const getCellsThatCanTakeOutOpponentCells = (
+  currentPlayerCells: number[],
+  cellIndexNeighborsMapping: { [cellIndex: number]: number[] },
+  cells: Cells
+): { [cellIndex: number]: RemovableCellIndexWithDestinationCellIndex[] } => {
+  // const movableCellIndexes: number[] = []
+  const possibleMovableDestinationsWithRemovableCellIndex: {
+    [cellIndex: number]: RemovableCellIndexWithDestinationCellIndex[]
+  } = {}
+
+  console.log("currentPlayerCells", currentPlayerCells)
+
+  console.log("cellIndexNeighborsMapping", cellIndexNeighborsMapping)
+
+  // For each of the current player cells, check if any of the cell can take out opponent cells
+  for (let i = 0; i < currentPlayerCells.length; i++) {
+    const cellIndex = currentPlayerCells[i]
+    const neighbors = cellIndexNeighborsMapping[cellIndex]
+    for (let j = 0; j < neighbors.length; j++) {
+      const neighborIndex = neighbors[j]
+      // Now check if the neighbor's neighbor has any opponent cells
+      // const neighborNeighbors = getNeighborsIndexes(neighborIndex)
+      // console.log("neigborindex", neighborIndex)
+      // console.log("neighborNeighbors", neighborNeighbors)
+
+      // Get the row and column of the neighborIndex
+      const neighborRow = Math.floor(neighborIndex / 5)
+      const neighborCol = neighborIndex % 5
+
+      // Get the row and column of the cellIndex
+      const cellRow = Math.floor(cellIndex / 5)
+      const cellCol = cellIndex % 5
+
+      // Get the difference between the cellIndex and the neighborIndex
+      const rowDiff = neighborRow - cellRow
+      const colDiff = neighborCol - cellCol
+
+      const neighborNeighborsRow = neighborRow + rowDiff
+      const neighborNeighborsCol = neighborCol + colDiff
+
+      const neighborsNeighbor = neighborNeighborsRow * 5 + neighborNeighborsCol
+
+      // Get the difference between the cellIndex and the neighborIndex
+      // const diff = neighborIndex - cellIndex
+
+      // const neighborsNeighbor = neighborIndex + diff
+
+      console.log("neighborIndex", neighborIndex)
+      console.log("neighborsNeighbor", neighborsNeighbor)
+
+      // Check if the cellIndex position is able to access the neighborNeighborIndex with diff
+      if (
+        cells[neighborsNeighbor] === null &&
+        !currentPlayerCells.includes(neighborIndex) &&
+        cells[neighborIndex] !== null
+      ) {
+        // movableCellIndexes.push(cellIndex)
+        // TODO: Update movableDestinations here with the cellIndex
+        if (!possibleMovableDestinationsWithRemovableCellIndex[cellIndex]) {
+          possibleMovableDestinationsWithRemovableCellIndex[cellIndex] = []
+        }
+        possibleMovableDestinationsWithRemovableCellIndex[cellIndex].push({
+          removableCellIndex: neighborIndex,
+          destinationCellIndex: neighborsNeighbor,
+        })
+      }
+    }
+  }
+
+  console.log(
+    "first",
+    JSON.stringify(possibleMovableDestinationsWithRemovableCellIndex)
+  )
+
+  return possibleMovableDestinationsWithRemovableCellIndex
+}
+
+const getMovableCellIndexes = (
+  currentPlayerCells: number[],
+  cells: Cells,
+  cellIndexNeighborsMapping: { [cellIndex: number]: number[] }
+): number[] => {
+  const movableCellIndexes: number[] = []
+
+  // If there are no movable cells which contains cells that can take out opponent cells, then select only neighbors which are null.
+  for (let i = 0; i < currentPlayerCells.length; i++) {
+    const cellIndex = currentPlayerCells[i]
+    const neighbors = cellIndexNeighborsMapping[cellIndex]
+    for (let j = 0; j < neighbors.length; j++) {
+      const neighborIndex = neighbors[j]
+      if (cells[neighborIndex] === null) {
+        movableCellIndexes.push(cellIndex)
+        break
+      }
+    }
+  }
+
+  console.log(":: currentPlayerCells", currentPlayerCells)
+  console.log("movableCellIndexes", movableCellIndexes)
+
+  return movableCellIndexes
 }
 
 Dusk.initLogic({
@@ -64,41 +191,183 @@ Dusk.initLogic({
   setup: (allPlayerIds) => ({
     cells: new Array(25)
       .fill(allPlayerIds[1], 0, 12)
+      .fill(null, 12, 13)
       .fill(allPlayerIds[0], 13, 25),
     winCombo: null,
-    lastMovePlayerId: null,
+    lastMovePlayerId: allPlayerIds[1],
+    currentPlayerId: allPlayerIds[0],
     playerIds: allPlayerIds,
     movableCellIndexes: [13, 16, 17, 18],
     movableDestinations: [],
+    possibleMovableDestinationsWithRemovableCellIndex: {
+      13: [{ removableCellIndex: -1, destinationCellIndex: 12 }],
+      16: [{ removableCellIndex: -1, destinationCellIndex: 12 }],
+      17: [{ removableCellIndex: -1, destinationCellIndex: 12 }],
+      18: [{ removableCellIndex: -1, destinationCellIndex: 12 }],
+    },
+    initCall: false,
   }),
   actions: {
-    assignInitialCells: (cells) => {
-      console.log("assignInitialCells", cells)
+    assignInitialCells: (cells, { game }) => {
+      game.initCall = true
+      // Get the cells that belong to the current player
+      const currentPlayerCells = cells.reduce<number[]>(
+        (acc, cell, cellIndex) => {
+          if (cell === game.currentPlayerId) {
+            acc.push(cellIndex)
+          }
+          return acc
+        },
+        []
+      )
+
+      console.log("currentPlayerCells", currentPlayerCells)
+
+      // Get the neighbors of each cell that belongs to the current player
+      const cellIndexNeighborsMapping: { [cellIndex: number]: number[] } = {}
+
+      for (let i = 0; i < currentPlayerCells.length; i++) {
+        const cellIndex = currentPlayerCells[i]
+        cellIndexNeighborsMapping[cellIndex] = getNeighborsIndexes(cellIndex)
+      }
+
+      game.movableCellIndexes = getMovableCellIndexes(
+        currentPlayerCells,
+        game.cells,
+        cellIndexNeighborsMapping
+      )
     },
     handleClick: (cellIndex, { game }) => {
       // The clicked cell should be movable or present in movable destinations
       if (
         !game.movableCellIndexes.includes(cellIndex) &&
-        !game.movableDestinations.includes(cellIndex)
+        !game.movableDestinations.some(
+          (element) => element.destinationCellIndex === cellIndex
+        )
       ) {
         console.log("clicked on non movable cells")
         return
       }
 
-      console.log(
-        "game.movableDestinations**************",
-        game.movableDestinations.length,
-        game.selectedCellIndex,
-        game.movableDestinations
-      )
-
       // If the clicked cell is in movable destinations
-      if (game.movableDestinations.includes(cellIndex)) {
+      if (
+        game.movableDestinations.some(
+          (element) => element.destinationCellIndex === cellIndex
+        )
+      ) {
         console.log("clicked on destination cells")
+        // Update the current player to the next player
+        game.currentPlayerId =
+          game.currentPlayerId === game.playerIds[0]
+            ? game.playerIds[1]
+            : game.playerIds[0]
         game.cells[cellIndex] = game.cells[game.selectedCellIndex || 0]
         game.cells[game.selectedCellIndex || 0] = null
         game.movableDestinations = []
-        game.movableCellIndexes = [13]
+
+        console.log("cellIndex", cellIndex)
+        console.log("game.selectedCellIndex", game.selectedCellIndex)
+
+        const possibleMovableDestinations =
+          game.possibleMovableDestinationsWithRemovableCellIndex[
+            game.selectedCellIndex || 0
+          ]
+
+        if (possibleMovableDestinations) {
+          for (let i = 0; i < possibleMovableDestinations.length; i++) {
+            if (
+              possibleMovableDestinations[i].destinationCellIndex === cellIndex
+            ) {
+              if (possibleMovableDestinations[i].removableCellIndex !== -1) {
+                game.cells[possibleMovableDestinations[i].removableCellIndex] =
+                  null
+              }
+              break
+            }
+          }
+        }
+
+        console.log(
+          "game.possibleMovableDestinationsWithRemovableCellIndex",
+          game.possibleMovableDestinationsWithRemovableCellIndex[
+            game.selectedCellIndex || 0
+          ]
+        )
+        // For each cell of the playerId check if there are any cells which can take opponent cells.
+        const currentPlayerCells = game.cells.reduce<number[]>(
+          (acc, cell, cellIndex) => {
+            if (cell === game.currentPlayerId) {
+              acc.push(cellIndex)
+            }
+            return acc
+          },
+          []
+        )
+
+        // Get the neighbors of each cell that belongs to the current player
+        const cellIndexNeighborsMapping: { [cellIndex: number]: number[] } = {}
+
+        for (let i = 0; i < currentPlayerCells.length; i++) {
+          const cellIndex = currentPlayerCells[i]
+          cellIndexNeighborsMapping[cellIndex] = getNeighborsIndexes(cellIndex)
+        }
+
+        // Get the next movable cellIndexes
+        const cellIndexesWithMovableDestinations: {
+          [cellIndex: number]: RemovableCellIndexWithDestinationCellIndex[]
+        } = getCellsThatCanTakeOutOpponentCells(
+          currentPlayerCells,
+          cellIndexNeighborsMapping,
+          game.cells
+        )
+
+        console.log(
+          "cellIndexesWithMovableDestinations",
+          cellIndexesWithMovableDestinations,
+          Object.keys(cellIndexesWithMovableDestinations)
+        )
+
+        if (Object.keys(cellIndexesWithMovableDestinations).length === 0) {
+          // As there are no movable cells that can take out opponent cells, update the movable cellIndexes to empty neighbors
+          const emptyNeighbors: number[] = getMovableCellIndexes(
+            currentPlayerCells,
+            game.cells,
+            cellIndexNeighborsMapping
+          )
+
+          game.movableCellIndexes = emptyNeighbors
+          console.log("movableCellIndexes", game.movableCellIndexes)
+          game.possibleMovableDestinationsWithRemovableCellIndex = {}
+          for (let i = 0; i < emptyNeighbors.length; i++) {
+            game.possibleMovableDestinationsWithRemovableCellIndex[
+              emptyNeighbors[i]
+            ] = []
+            // Get the empty neighbors of the neighbors
+            const neighbors = cellIndexNeighborsMapping[emptyNeighbors[i]]
+            console.log("neighborrrrrs", neighbors)
+            for (let j = 0; j < neighbors.length; j++) {
+              if (game.cells[neighbors[j]] === null) {
+                game.possibleMovableDestinationsWithRemovableCellIndex[
+                  emptyNeighbors[i]
+                ].push({
+                  destinationCellIndex: neighbors[j],
+                  removableCellIndex: -1,
+                })
+              }
+            }
+          }
+          console.log(
+            "game.possibleMovableDestinationsWithRemovableCellIndex",
+            game.possibleMovableDestinationsWithRemovableCellIndex
+          )
+        } else {
+          game.movableCellIndexes = Object.keys(
+            cellIndexesWithMovableDestinations
+          ).map((cellIndex) => Number(cellIndex))
+          game.possibleMovableDestinationsWithRemovableCellIndex =
+            cellIndexesWithMovableDestinations
+        }
+
         game.selectedCellIndex = undefined
         // game.winCombo = findWinningCombo(game.cells)
         return
@@ -107,39 +376,83 @@ Dusk.initLogic({
       // The clicked cell should be selected to distinguish that it is selected.
       game.selectedCellIndex = cellIndex
 
-      // Highlight the destination cells for the selected cell
-      // Check if any neighbors are having opposite player cell and check it's neighbors for emtpy cells
-      const neighbors = getNeighborsIndexes(cellIndex)
+      // Use the selected cell to get the movable destinations
+      // game.movableDestinations = []
+      if (game.possibleMovableDestinationsWithRemovableCellIndex) {
+        game.movableDestinations =
+          game.possibleMovableDestinationsWithRemovableCellIndex[
+            game.selectedCellIndex
+          ].map((element) => {
+            return {
+              destinationCellIndex: element.destinationCellIndex,
+              removableCellIndex: element.removableCellIndex,
+            }
+          })
+        // } else {
+        //   // For each cell of the playerId check if there are any cells which can take opponent cells.
+        //   const currentPlayerCells = game.cells.reduce<number[]>(
+        //     (acc, cell, cellIndex) => {
+        //       if (cell === game.currentPlayerId) {
+        //         acc.push(cellIndex)
+        //       }
+        //       return acc
+        //     },
+        //     []
+        //   )
 
-      const neighborsWithOppositePlayer = neighbors.filter((i) => {
-        if (i < 0 || i > 24) {
-          return false
-        }
-        // Filter out all the null and the same player cell to get the neighbors with opposite player
-        return game.cells[i] !== game.cells[cellIndex] && game.cells[i] === null
-      })
+        //   // Get the neighbors of each cell that belongs to the current player
+        //   const cellIndexNeighborsMapping: { [cellIndex: number]: number[] } = {}
 
-      if (neighborsWithOppositePlayer.length > 0) {
-        // Check if the neighbors neighbors are empty
-        for (let i = 0; i < neighborsWithOppositePlayer.length; i++) {
-          const neighborIndex = neighborsWithOppositePlayer[i]
-          const neighborNeighbors = getNeighborsIndexes(neighborIndex)
-          if (neighborNeighbors.every((i) => game.cells[i] === null)) {
-            console.log("i", i)
-            game.movableDestinations.push(i)
-          }
-        }
+        //   for (let i = 0; i < currentPlayerCells.length; i++) {
+        //     const cellIndex = currentPlayerCells[i]
+        //     cellIndexNeighborsMapping[cellIndex] = getNeighborsIndexes(cellIndex)
+        //   }
+
+        //   game.movableDestinations = getMovableCellIndexes(
+        //     currentPlayerCells,
+        //     game.cells,
+        //     cellIndexNeighborsMapping
+        //   )
       }
 
-      if (game.movableDestinations.length === 0) {
-        game.selectedCellIndex = undefined
-        game.movableDestinations = neighbors.filter((i) => {
-          if (i < 0 || i > 24) {
-            return false
-          }
-          return game.cells[i] === undefined
-        })
-      }
+      // // Highlight the destination cells for the selected cell
+      // // Check if any neighbors are having opposite player cell and check it's neighbors for empty cells
+      // const neighbors = getNeighborsIndexes(cellIndex)
+
+      // const neighborsWithOppositePlayer = neighbors.filter((i) => {
+      //   // Filter out all the null and the same player cell to get the neighbors with opposite player
+      //   return game.cells[i] !== game.cells[cellIndex] && game.cells[i] !== null
+      // })
+
+      // console.log("neighborsWithOppositePlayer", neighborsWithOppositePlayer)
+
+      // if (neighborsWithOppositePlayer.length > 0) {
+      //   // Check if the neighbors neighbors are empty
+      //   for (let i = 0; i < neighborsWithOppositePlayer.length; i++) {
+      //     const neighborIndex = neighborsWithOppositePlayer[i]
+      //     const neighborNeighbors = getNeighborsIndexes(neighborIndex)
+      //     for (let j = 0; j < neighborNeighbors.length; j++) {
+      //       if (game.cells[neighborNeighbors[j]] === null) {
+      //         // game.movableDestinations.push(neighborNeighbors[j])
+      //         game.movableDestinations.push({
+      //           destinationCellIndex: neighborNeighbors[j],
+      //           removableCellIndex: -1,
+      //         })
+      //       }
+      //     }
+      //   }
+      // }
+
+      // if (game.movableDestinations.length === 0) {
+      //   for (let i = 0; i < neighbors.length; i++) {
+      //     if (game.cells[neighbors[i]] === null) {
+      //       game.movableDestinations.push({
+      //         destinationCellIndex: neighbors[i],
+      //         removableCellIndex: -1,
+      //       })
+      //     }
+      //   }
+      // }
 
       console.log("game.movableDestinations", game.movableDestinations)
     },

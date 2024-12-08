@@ -19,6 +19,7 @@ export interface GameState {
     [cellIndex: number]: RemovableCellIndexWithDestinationCellIndex[]
   }
   initCall: boolean
+  started: boolean
 }
 
 type GameActions = {
@@ -175,6 +176,7 @@ Dusk.initLogic({
       18: [{ removableCellIndex: -1, destinationCellIndex: 12 }],
     },
     initCall: true,
+    started: false,
   }),
   actions: {
     handleClick: (cellIndex, { game }) => {
@@ -194,6 +196,8 @@ Dusk.initLogic({
           (element) => element.destinationCellIndex === cellIndex
         )
       ) {
+        // Set the game started to true as the first move has been made
+        game.started = true
         // Update the last move player to the current player
         game.lastMovePlayerId = game.currentPlayerId
         // Update the current player to the next player

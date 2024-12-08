@@ -121,20 +121,6 @@ button:not([disabled]) {
   cursor: pointer;
 }
 
-@keyframes tap-to-play {
-  0% {
-    transform: scale(0.7);
-  }
-
-  50% {
-    transform: scale(1);
-  }
-
-  100% {
-    transform: scale(0.7);
-  }
-}
-
 
 #board table {
   position: absolute;
@@ -147,80 +133,20 @@ button:not([disabled]) {
 }
 
 #board table td {
-  border: 1.3vw solid var(--lines-color);
+  border: var(--outline-size) solid var(--lines-color);
+  padding: 0px;
 }
 
-/* Diagonal lines */
-.diagonal-line {
+.game-board-svg {
   position: absolute;
-  border: none;
   z-index: 0;
-}
-
-/* Top-left to bottom-right diagonal */
-.diagonal-line.tl-br {
-  border-top: 1.3vw solid var(--lines-color);
-  transform: rotate(45deg);
-  transform-origin: top left;
-  top: 10%;
-  left: 10.5%;
-  width: 113%;
-  height: 1%;
-  z-index: 0;
-}
-
-/* Bottom-left to top-right diagonal */
-.diagonal-line.bl-tr {
-  border-top: 1.3vw solid var(--lines-color);
-  transform: rotate(-45deg);
-  transform-origin: top right;
-  top: 10%;
-  left: -24%;
-  width: 113%;
-  height: 1%;
-  z-index: 0;
-}
-
-/* Rhombus shape */
-.rhombus {
-  position: absolute;
-  border: 1.3vw solid var(--lines-color);
-  transform: rotate(45deg);
-  transform-origin: center;
-  top: 21%;
-  left: 21%;
-  width: 56%;
-  height: 56%;
-  z-index: 0;
-}
-
-
-
-/* #board.initial button:nth-child(5)::before {
-  opacity: 1;
-  content: "tap to play";
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+  background-image: url(./assets/board.svg);
+  background-repeat: no-repeat;
+  background-size: contain;
   height: 100%;
+  width: 100%;
+}
 
-  text-align: center;
-  font-size: 8vw;
-  font-weight: 700;
-  line-height: 11vw;
-  letter-spacing: 0vw;
-
-  background: linear-gradient(90deg, #cb89fc 0.24%, #fea9ab 96.17%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-
-  animation: tap-to-play 1.5s ease-in-out infinite;
-} */
 
 @media (hover: hover) {
   button:not([disabled]):after {

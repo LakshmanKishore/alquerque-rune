@@ -25,32 +25,10 @@ function initUI(
     return button
   })
 
-  // Create a 4x4 table for the background lines
-  const grid = document.createElement("table")
-  for (let i = 0; i < 4; i++) {
-    const row = document.createElement("tr")
-    grid.appendChild(row)
-    for (let j = 0; j < 4; j++) {
-      const line = document.createElement("td")
-      row.appendChild(line)
-    }
-  }
-  board.appendChild(grid)
-
-  // Create top-left to bottom-right diagonal
-  const diagonalTLBR = document.createElement("div")
-  diagonalTLBR.className = "diagonal-line tl-br"
-  board.appendChild(diagonalTLBR)
-
-  // Create bottom-left to top-right diagonal
-  const diagonalBLTR = document.createElement("div")
-  diagonalBLTR.className = "diagonal-line bl-tr"
-  board.appendChild(diagonalBLTR)
-
-  // Create a rhombus shape
-  const rhombus = document.createElement("div")
-  rhombus.className = "rhombus"
-  board.appendChild(rhombus)
+  // Create a svg element for the game board
+  const svg = document.createElement("svg")
+  svg.classList.add("game-board-svg")
+  board.appendChild(svg)
 
   playerContainers = playerIds.map((playerId, index) => {
     const player = Dusk.getPlayerInfo(playerId)

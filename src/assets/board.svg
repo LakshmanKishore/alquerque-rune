@@ -1,0 +1,15 @@
+<!-- <svg viewBox="0 0 245 245" width="240" height="240" xmlns="http://www.w3.org/2000/svg"> -->
+<svg viewBox="0 0 300 300" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,30)">
+  <rect width="240" height="240" style="stroke: #e6e6e620; fill: #00000000; stroke-width: 1.3vw;"/>
+  <line style="stroke: #e6e6e620; fill: #00000000; stroke-width: 1.3vw;" x1="0" y1="60" x2="240" y2="60"/>
+  <line style="stroke: #e6e6e620; fill: #00000000; stroke-width: 1.3vw;" x1="0" y1="120" x2="240" y2="120"/>
+  <line style="stroke: #e6e6e620; fill: #00000000; stroke-width: 1.3vw;" x1="0" y1="180" x2="240" y2="180"/>
+  <line style="stroke: #e6e6e620; fill: #00000000; stroke-width: 1.3vw;" x1="60" y1="0" x2="60" y2="240"/>
+  <line style="stroke: #e6e6e620; fill: #00000000; stroke-width: 1.3vw;" x1="120" y1="0" x2="120" y2="240"/>
+  <line style="stroke: #e6e6e620; fill: #00000000; stroke-width: 1.3vw;" x1="180" y1="0" x2="180" y2="240"/>
+  <line style="stroke: #e6e6e620; fill: #00000000; stroke-width: 1.3vw;" x1="240" y1="240" x2="0" y2="0"/>
+  <line style="stroke: #e6e6e620; fill: #00000000; stroke-width: 1.3vw;" x1="240" y1="0" x2="0" y2="240"/>
+  <polygon style="stroke: #e6e6e620; fill: #00000000; stroke-width: 1.3vw;" points="0 120 120 0 240 120 120 240"/>
+</g>
+</svg>

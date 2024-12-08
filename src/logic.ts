@@ -1,4 +1,4 @@
-import type { PlayerId, DuskClient } from "dusk-games-sdk/multiplayer"
+import type { PlayerId, RuneClient } from "rune-sdk"
 
 export type Cells = (PlayerId | null)[]
 export type RemovableCellIndexWithDestinationCellIndex = {
@@ -27,7 +27,7 @@ type GameActions = {
 }
 
 declare global {
-  const Dusk: DuskClient<GameState, GameActions>
+  const Rune: RuneClient<GameState, GameActions>
 }
 
 function checkForGameOver(cells: Cells) {
@@ -155,7 +155,7 @@ const getMovableCellIndexes = (
   return movableCellIndexes
 }
 
-Dusk.initLogic({
+Rune.initLogic({
   minPlayers: 1,
   maxPlayers: 2,
   setup: (allPlayerIds) => ({
@@ -302,20 +302,20 @@ Dusk.initLogic({
 
         if (checkForGameOver(game.cells)) {
           if (game.currentPlayerId === "bot") {
-            Dusk.gameOver({
+            Rune.gameOver({
               players: {
                 [game.lastMovePlayerId]: "WON",
               },
             })
           } else if (game.lastMovePlayerId === "bot") {
-            Dusk.gameOver({
+            Rune.gameOver({
               players: {
                 [game.currentPlayerId]: "LOST",
               },
             })
           } else {
             // Declare win here for multiplayer
-            Dusk.gameOver({
+            Rune.gameOver({
               players: {
                 [game.currentPlayerId]: "LOST",
                 [game.lastMovePlayerId]: "WON",

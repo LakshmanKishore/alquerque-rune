@@ -1,6 +1,6 @@
 import "./styles.css"
 
-import { PlayerId } from "dusk-games-sdk/multiplayer"
+import { PlayerId } from "rune-sdk"
 
 import selectSoundAudio from "./assets/select.wav"
 import { Cells } from "./logic.ts"
@@ -19,7 +19,7 @@ function initUI(
 ) {
   cellButtons = cells.map((_, cellIndex) => {
     const button = document.createElement("button")
-    button.addEventListener("click", () => Dusk.actions.handleClick(cellIndex))
+    button.addEventListener("click", () => Rune.actions.handleClick(cellIndex))
     board.appendChild(button)
 
     return button
@@ -31,7 +31,7 @@ function initUI(
   board.appendChild(svg)
 
   playerContainers = playerIds.map((playerId, index) => {
-    const player = Dusk.getPlayerInfo(playerId)
+    const player = Rune.getPlayerInfo(playerId)
 
     const li = document.createElement("li")
     li.setAttribute("player", index.toString())
@@ -46,7 +46,7 @@ function initUI(
   })
 }
 
-Dusk.initClient({
+Rune.initClient({
   onChange: ({ game, yourPlayerId, action }) => {
     if (!cellButtons) initUI(game.cells, game.playerIds, yourPlayerId)
 

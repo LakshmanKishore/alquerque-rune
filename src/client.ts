@@ -30,6 +30,15 @@ function initUI(
   svg.classList.add("game-board-svg")
   board.appendChild(svg)
 
+  drawPlayerChoiceContainers(playerIds, yourPlayerId)
+}
+
+const drawPlayerChoiceContainers = (
+  playerIds: PlayerId[],
+  yourPlayerId: PlayerId | undefined
+) => {
+  playersSection.innerHTML = ""
+
   playerContainers = playerIds.map((playerId, index) => {
     const player = Rune.getPlayerInfo(playerId)
 
@@ -99,6 +108,11 @@ Rune.initClient({
       )
     })
 
+    // Check if a new player has joined for playing
+    if (playerContainers.length < game.playerIds.length) {
+      drawPlayerChoiceContainers(game.playerIds, yourPlayerId)
+    }
+
     if (action && action.name === "handleClick") selectSound.play()
 
     if (game.currentPlayerId === "bot") {
@@ -126,11 +140,12 @@ Rune.initClient({
           )! as HTMLElement
           element.removeAttribute("disabled")
           element.click()
-          console.log("performed click on element:", element)
           element.setAttribute("disabled", "")
         }, 1000)
       } else {
-        console.log("The random cell is already selected.")
+        console.log(
+          "The random cell is already selected. Moving to a random destination."
+        )
         // The random cell index would be selected, so move the cell to some random destination
         const possibleMovableDestinations =
           game.possibleMovableDestinationsWithRemovableCellIndex[
@@ -153,10 +168,6 @@ Rune.initClient({
             destinationElement.removeAttribute("disabled")
             destinationElement.click()
             destinationElement.setAttribute("disabled", "")
-            console.log(
-              "performed click on destination element:",
-              destinationElement
-            )
           }, 1000)
         }
         console.log("Bot's turn is over.")

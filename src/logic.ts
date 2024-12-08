@@ -1,4 +1,4 @@
-import type { PlayerId, RuneClient } from "rune-sdk"
+import type { PlayerId, RuneClient, GameOverResult } from "rune-sdk"
 
 export type Cells = (PlayerId | null)[]
 export type RemovableCellIndexWithDestinationCellIndex = {
@@ -7,7 +7,6 @@ export type RemovableCellIndexWithDestinationCellIndex = {
 }
 export interface GameState {
   cells: Cells
-  winCombo: number[] | null
   lastMovePlayerId: PlayerId
   currentPlayerId: PlayerId
   playerIds: PlayerId[]
@@ -20,6 +19,7 @@ export interface GameState {
   }
   initCall: boolean
   started: boolean
+  spectatorPlayerId: PlayerId | undefined
 }
 
 type GameActions = {
@@ -163,7 +163,6 @@ Rune.initLogic({
       .fill(allPlayerIds.length === 1 ? "bot" : allPlayerIds[1], 0, 12)
       .fill(null, 12, 13)
       .fill(allPlayerIds[0], 13, 25),
-    winCombo: null,
     lastMovePlayerId: allPlayerIds.length === 1 ? "bot" : allPlayerIds[1],
     currentPlayerId: allPlayerIds[0],
     playerIds: allPlayerIds,
@@ -177,6 +176,7 @@ Rune.initLogic({
     },
     initCall: true,
     started: false,
+    spectatorPlayerId: undefined,
   }),
   actions: {
     handleClick: (cellIndex, { game }) => {
@@ -301,27 +301,26 @@ Rune.initLogic({
         game.selectedCellIndex = undefined
 
         if (checkForGameOver(game.cells)) {
+          let playerOptions: { [playerId: string]: GameOverResult } = {}
+
           if (game.currentPlayerId === "bot") {
-            Rune.gameOver({
-              players: {
-                [game.lastMovePlayerId]: "WON",
-              },
-            })
+            playerOptions[game.lastMovePlayerId] = "WON"
+            if (game.spectatorPlayerId !== undefined) {
+              playerOptions[game.spectatorPlayerId] = "LOST"
+            }
           } else if (game.lastMovePlayerId === "bot") {
-            Rune.gameOver({
-              players: {
-                [game.currentPlayerId]: "LOST",
-              },
-            })
+            playerOptions[game.currentPlayerId] = "LOST"
+            if (game.spectatorPlayerId !== undefined) {
+              playerOptions[game.spectatorPlayerId] = "WON"
+            }
           } else {
-            // Declare win here for multiplayer
-            Rune.gameOver({
-              players: {
-                [game.currentPlayerId]: "LOST",
-                [game.lastMovePlayerId]: "WON",
-              },
-            })
+            playerOptions[game.currentPlayerId] = "LOST"
+            playerOptions[game.lastMovePlayerId] = "WON"
           }
+
+          Rune.gameOver({
+            players: playerOptions,
+          })
         }
         return
       }
@@ -340,6 +339,31 @@ Rune.initLogic({
               removableCellIndex: element.removableCellIndex,
             }
           })
+      }
+    },
+  },
+  events: {
+    playerJoined: (playerId, { game }) => {
+      // If the game has not yet started, then add the player to the game once he joins.
+      if (game.playerIds.length === 1 && !game.started) {
+        game.playerIds.push(playerId)
+        game.lastMovePlayerId = playerId
+        // Replace all the cell values from bot to the playerId
+        game.cells = game.cells.map((cell) => {
+          if (cell === "bot") {
+            return playerId
+          }
+          return cell
+        })
+      } else {
+        game.spectatorPlayerId = playerId
+        console.log("Have to set the playerId to spectatorPlayerId")
+        // Rune.gameOver({
+        //   players: {
+        //     [playerId]: "TIE",
+        //     [game.playerIds[0]]: "TIE",
+        //   },
+        // })
       }
     },
   },

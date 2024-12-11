@@ -301,7 +301,7 @@ Rune.initLogic({
         game.selectedCellIndex = undefined
 
         if (checkForGameOver(game.cells)) {
-          let playerOptions: { [playerId: string]: GameOverResult } = {}
+          const playerOptions: { [playerId: string]: GameOverResult } = {}
 
           if (game.currentPlayerId === "bot") {
             playerOptions[game.lastMovePlayerId] = "WON"
